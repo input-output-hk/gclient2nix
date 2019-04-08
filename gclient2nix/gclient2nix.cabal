@@ -1,0 +1,19 @@
+name: gclient2nix
+version: 0.0.0
+cabal-version:       >=1.10
+build-type:          Simple
+
+executable gclient2nix
+  main-is:   gclient2nix.hs
+  default-language:     Haskell2010
+  ghc-options:         -Wall
+  build-depends:  base
+                , turtle
+                , aeson
+                , hnix
+                , text
+                , data-fix
+                , managed
+                , bytestring
+                , unordered-containers
+                , megaparsec
