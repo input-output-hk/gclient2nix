@@ -18,29 +18,47 @@ data GitRef = GitRef
   }
   | GoogleSourceRef
   { url :: Text
-  , googleRev :: Text
+  , googleRev :: RevRef
   } deriving Show
 
 type Parser = Parsec Void Text
+
+data RevRef = RevRefRev { rrRev :: Text } | RevRefRef { rrRef :: Text } deriving Show
 
 parseGitRef :: Parser GitRef
 parseGitRef = try parseGoogleSourceRef <|> try parseGithubRef <|> parsePlainGitRef
 
 parseGoogleSourceRef :: Parser GitRef
 parseGoogleSourceRef = do
-  _ <- string "https://chromium.googlesource.com/"
-  fragment <- pack <$> some (alphaNumChar <|> oneOf ['/','.','-'])
+  _ <- string "https://"
+  subdomain <- pack <$> some alphaNumChar
+  _ <- string ".googlesource.com/"
+  fragment <- pack <$> some (alphaNumChar <|> oneOf ['/','.','-', '_'])
   _ <- char '@'
-  gitrev <- pack <$> some (alphaNumChar <|> char '.')
+  let
+    revOrRef :: Parser RevRef
+    revOrRef = try parseRev <|> parseRef
+    parseRev :: Parser RevRef
+    parseRev = do
+      rev' <- some hexDigitChar
+      eof
+      pure $ RevRefRev $ pack rev'
+    parseRef :: Parser RevRef
+    parseRef = do
+      ref <- some (alphaNumChar <|> char '.')
+      eof
+      pure $ RevRefRef $ pack ref
+  gitrev <- revOrRef
   eof
-  pure $ GoogleSourceRef ("https://chromium.googlesource.com/" <> fragment) gitrev
+  pure $ GoogleSourceRef ("https://" <> subdomain <> ".googlesource.com/" <> fragment) gitrev
 
 parseGithubRef :: Parser GitRef
 parseGithubRef = do
   _ <- string "https://github.com/"
   owner' <- pack <$> some alphaNumChar
   _ <- char '/'
-  repo' <- pack <$> some (alphaNumChar <|> char '.')
+  repo' <- pack <$> some (alphaNumChar)
+  _ <- string ".git"
   _ <- char '@'
   gitrev <- pack <$> some (alphaNumChar <|> char '.')
   eof
@@ -48,7 +66,7 @@ parseGithubRef = do
 
 parsePlainGitRef :: Parser GitRef
 parsePlainGitRef = do
-  url' <- pack <$> some (alphaNumChar <|> char '.' <|> char ':' <|> char '/' <|> char '-')
+  url' <- pack <$> some (alphaNumChar <|> oneOf [ '.', ':', '/', '-', '_' ])
   _ <- char '@'
   gitrev <- pack <$> some (alphaNumChar <|> char '.')
   eof

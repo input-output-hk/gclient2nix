@@ -17,3 +17,5 @@ executable gclient2nix
                 , bytestring
                 , unordered-containers
                 , megaparsec
+                , directory
+                , extra
