@@ -3,13 +3,26 @@ version: 0.0.0
 cabal-version:       >=1.10
 build-type:          Simple
 
+library
+  default-language: Haskell2010
+  ghc-options:         -Wall
+  exposed-modules: GitUrlParser
+                , State
+  hs-source-dirs: common
+  build-depends:  base
+                , aeson
+                , megaparsec
+                , unordered-containers
+                , text
+
 executable gclient2nix
   main-is:   gclient2nix.hs
   default-language:     Haskell2010
-  ghc-options:         -Wall
+  ghc-options:         -Weverything
   build-depends:  base
                 , turtle
                 , aeson
+                , gclient2nix
                 , hnix
                 , text
                 , data-fix
@@ -19,3 +32,16 @@ executable gclient2nix
                 , megaparsec
                 , directory
                 , extra
+
+test-suite unit
+  ghc-options:         -Wall
+  default-language: Haskell2010
+  type: exitcode-stdio-1.0
+  main-is: Tests.hs
+  build-depends:  base
+                , text
+                , gclient2nix
+                , unordered-containers
+                , bytestring
+                , aeson
+                , megaparsec
